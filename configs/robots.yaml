@@ -1,0 +1,35 @@
+robots:
+  - name: arm-01
+    host: 192.168.10.1
+    type: arm
+    port: 22
+    user: ubuntu
+    tags: [production, arm]
+
+  - name: arm-02
+    host: 192.168.10.2
+    type: arm
+    port: 22
+    user: ubuntu
+    tags: [production, arm]
+
+  - name: mobile-01
+    host: 192.168.10.11
+    type: mobile
+    port: 22
+    user: ubuntu
+    tags: [production, mobile]
+
+  - name: mobile-02
+    host: 192.168.10.12
+    type: mobile
+    port: 22
+    user: ubuntu
+    tags: [staging, mobile]
+
+  - name: inspection-01
+    host: 192.168.10.21
+    type: inspection
+    port: 22
+    user: ubuntu
+    tags: [staging, inspection]
