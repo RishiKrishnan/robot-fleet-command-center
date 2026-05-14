@@ -1,10 +1,27 @@
 # Robot Fleet Command Center
 
-A production-style CLI tool for orchestrating and monitoring a fleet of robots over SSH.
+[![CI](https://github.com/RishiKrishnan/robot-fleet-command-center/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiKrishnan/robot-fleet-command-center/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Built to demonstrate reliability engineering patterns applied to robotics infrastructure:
-fleet health monitoring, parallel command dispatch, declarative YAML configuration,
-structured logging, and a fully tested mock execution layer.
+A production-style Python CLI for orchestrating and monitoring a fleet of robots over SSH.
+
+Designed to reflect the kind of tooling used in robotics infrastructure and SRE environments:
+declarative configuration, health monitoring, structured logging, a cleanly layered
+architecture, and a fully tested mock execution layer.
+
+---
+
+## Skills Demonstrated
+
+| Area | Detail |
+|---|---|
+| CLI design | `argparse` with subcommands, mutually exclusive flags, clean exit codes |
+| Architecture | Protocol-based executor interface; one-way data flow across four modules |
+| Testing | 22 pytest tests, 100% coverage on core modules, no real SSH or hardware needed |
+| Observability | Structured logging to stderr, configurable verbosity, actionable error messages |
+| CI/CD | GitHub Actions matrix across Python 3.10, 3.11, 3.12; lint + test on every push |
+| Python packaging | `src/` layout, `pyproject.toml`, editable install, entry point script |
 
 ---
 
@@ -93,13 +110,13 @@ robots:
     tags: [production, arm]
 ```
 
-| Field  | Required | Default  | Description                        |
-|--------|----------|----------|------------------------------------|
-| name   | yes      | —        | Unique identifier                  |
-| host   | yes      | —        | IP address or hostname             |
-| type   | yes      | —        | Robot class (arm, mobile, etc.)    |
-| port   | no       | 22       | SSH port                           |
-| user   | no       | robot    | SSH user                           |
+| Field  | Required | Default  | Description                         |
+|--------|----------|----------|-------------------------------------|
+| name   | yes      | —        | Unique identifier                   |
+| host   | yes      | —        | IP address or hostname              |
+| type   | yes      | —        | Robot class (arm, mobile, etc.)     |
+| port   | no       | 22       | SSH port                            |
+| user   | no       | robot    | SSH user                            |
 | tags   | no       | []       | Used for group targeting with --tag |
 
 ---
@@ -108,10 +125,10 @@ robots:
 
 ```
 src/fleet/
-├── config.py        # YAML loading → Robot / FleetConfig dataclasses
-├── executor.py      # Executor protocol + MockSSHExecutor
-├── health.py        # Health check logic on top of Executor
-├── cli.py           # argparse entry point; dispatches to above modules
+├── config.py         # YAML loading → Robot / FleetConfig dataclasses
+├── executor.py       # Executor protocol + MockSSHExecutor
+├── health.py         # Health check logic on top of Executor
+├── cli.py            # argparse entry point; dispatches to above modules
 └── logging_config.py
 ```
 
