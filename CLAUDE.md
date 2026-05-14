@@ -1,10 +1,12 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this
+repository.
 
 ## Project
 
-Robot Fleet Command Center — a Python CLI tool for orchestrating and health-checking a fleet of robots over SSH. Stack: Python 3.11+, PyYAML, pytest, ruff, GitHub Actions CI.
+Robot Fleet Command Center — a Python CLI tool for orchestrating and health-checking a fleet
+of robots over SSH. Stack: Python 3.10+, PyYAML, pytest, ruff, GitHub Actions CI.
 
 ## Commands
 
@@ -37,13 +39,16 @@ configs/robots.yaml  # declarative fleet definition
 tests/               # pytest; conftest.py defines shared Robot/FleetConfig fixtures
 ```
 
-The `Executor` Protocol in `executor.py` is the main extension point — `health.py` and `cli.py` depend on it, not on `MockSSHExecutor` directly. Swap in a Paramiko-backed class without touching business logic. Data flows one way: `config` → `executor` → `health` → `cli`.
+The `Executor` Protocol in `executor.py` is the main extension point — `health.py` and
+`cli.py` depend on it, not on `MockSSHExecutor` directly. Swap in a Paramiko-backed class
+without touching business logic. Data flows one way: `config` → `executor` → `health` → `cli`.
 
 ---
 
 ## Project Philosophy
 
-This project should reflect production-style engineering practices used in robotics, infrastructure, and software test environments.
+This project should reflect production-style engineering practices used in robotics,
+infrastructure, and software test environments.
 
 The goal is:
 - reliability

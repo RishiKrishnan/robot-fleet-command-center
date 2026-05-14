@@ -29,7 +29,12 @@ def test_load_config_file_not_found():
 
 def test_load_config_applies_defaults(tmp_path):
     config_file = tmp_path / "robots.yaml"
-    config_file.write_text("robots:\n  - name: r\n    host: 10.0.0.1\n    type: arm\n")
+    config_file.write_text(
+        "robots:\n"
+        "  - name: r\n"
+        "    host: 10.0.0.1\n"
+        "    type: arm\n"
+    )
     config = load_config(config_file)
     robot = config.robots[0]
     assert robot.port == 22

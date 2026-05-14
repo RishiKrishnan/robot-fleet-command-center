@@ -2,17 +2,23 @@
 
 A production-style CLI tool for orchestrating and monitoring a fleet of robots over SSH.
 
-Built to demonstrate reliability engineering patterns applied to robotics infrastructure: fleet health monitoring, parallel command dispatch, declarative YAML configuration, structured logging, and a fully tested mock execution layer.
+Built to demonstrate reliability engineering patterns applied to robotics infrastructure:
+fleet health monitoring, parallel command dispatch, declarative YAML configuration,
+structured logging, and a fully tested mock execution layer.
 
 ---
 
 ## Features
 
 - **Fleet health checks** — ping every robot and report connectivity status at a glance
-- **Remote command execution** — run shell commands across the whole fleet, a single robot, or a tagged group
-- **YAML-driven configuration** — define robots declaratively; no code changes to add or remove nodes
-- **Swappable executor** — `MockSSHExecutor` runs without hardware; replace with a Paramiko-backed implementation by satisfying the same `Executor` protocol
-- **Structured logging** — configurable verbosity with ISO timestamps, written to stderr so stdout stays pipeline-friendly
+- **Remote command execution** — run shell commands across the whole fleet, a single robot,
+  or a tagged group
+- **YAML-driven configuration** — define robots declaratively; no code changes to add or
+  remove nodes
+- **Swappable executor** — `MockSSHExecutor` runs without hardware; replace with a
+  Paramiko-backed implementation by satisfying the same `Executor` protocol
+- **Structured logging** — configurable verbosity with ISO timestamps, written to stderr so
+  stdout stays pipeline-friendly
 
 ---
 
@@ -109,9 +115,13 @@ src/fleet/
 └── logging_config.py
 ```
 
-The `Executor` [Protocol](src/fleet/executor.py) is the key seam in the design. `health.py` and `cli.py` call `executor.run(robot, command)` and know nothing about how that's implemented — making it straightforward to swap in a Paramiko SSH executor, a dry-run logger, or a parallel executor without touching any business logic.
+The `Executor` [Protocol](src/fleet/executor.py) is the key seam in the design. `health.py`
+and `cli.py` call `executor.run(robot, command)` and know nothing about how that's
+implemented — making it straightforward to swap in a Paramiko SSH executor, a dry-run
+logger, or a parallel executor without touching any business logic.
 
-Data flows one way: `config` has no knowledge of `executor` or `health`; `executor` knows only `Robot`; `health` composes `config` + `executor`; `cli` wires everything together.
+Data flows one way: `config` has no knowledge of `executor` or `health`; `executor` knows
+only `Robot`; `health` composes `config` + `executor`; `cli` wires everything together.
 
 ---
 
@@ -131,20 +141,27 @@ pytest tests/test_health.py
 pytest tests/test_health.py::test_executor_exception_yields_unknown
 ```
 
-Tests use `MockSSHExecutor` throughout — no real SSH connections, no hardware required. The `BrokenExecutor` fixture in `test_health.py` verifies that executor-level exceptions are caught and reported as `UNKNOWN` status rather than propagated.
+Tests use `MockSSHExecutor` throughout — no real SSH connections, no hardware required.
+The `BrokenExecutor` fixture in `test_health.py` verifies that executor-level exceptions
+are caught and reported as `UNKNOWN` status rather than propagated.
 
 ---
 
 ## CI
 
-GitHub Actions runs lint (`ruff`) and the full test suite on Python 3.11 and 3.12 on every push and pull request. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+GitHub Actions runs lint (`ruff`) and the full test suite on Python 3.10, 3.11, and 3.12
+on every push and pull request. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
 ## Extending
 
-**Add real SSH execution:** implement a class with `def run(self, robot: Robot, command: str) -> CommandResult` using Paramiko, then pass it anywhere a `MockSSHExecutor` is used today.
+**Add real SSH execution:** implement a class with
+`def run(self, robot: Robot, command: str) -> CommandResult` using Paramiko, then pass it
+anywhere a `MockSSHExecutor` is used today.
 
-**Add parallel execution:** wrap `check_fleet_health` or `cmd_run` with `concurrent.futures.ThreadPoolExecutor` — the per-robot functions are already independent.
+**Add parallel execution:** wrap `check_fleet_health` or `cmd_run` with
+`concurrent.futures.ThreadPoolExecutor` — the per-robot functions are already independent.
 
-**Add new CLI commands:** add a `sub.add_parser(...)` block in `build_parser()` and a matching `cmd_*` function, then register it in the `dispatch` dict in `main()`.
+**Add new CLI commands:** add a `sub.add_parser(...)` block in `build_parser()` and a
+matching `cmd_*` function, then register it in the `dispatch` dict in `main()`.

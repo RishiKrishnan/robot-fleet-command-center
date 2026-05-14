@@ -34,7 +34,9 @@ def test_duration_is_recorded(arm_robot):
 
 
 def test_command_result_success_property():
-    result = CommandResult(robot="r", command="c", exit_code=0, stdout="ok", stderr="", duration_ms=1.0)  # noqa: E501
+    result = CommandResult(
+        robot="r", command="c", exit_code=0, stdout="ok", stderr="", duration_ms=1.0
+    )
     assert result.success
 
 
