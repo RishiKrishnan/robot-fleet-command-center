@@ -9,6 +9,7 @@ Robot Fleet Command Center — a Python CLI tool for orchestrating and health-ch
 ## Commands
 
 ```bash
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"          # install with dev deps (pytest, ruff)
 fleet list                        # list configured robots
 fleet health                      # check fleet health

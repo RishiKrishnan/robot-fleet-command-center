@@ -18,10 +18,11 @@ Built to demonstrate reliability engineering patterns applied to robotics infras
 
 ## Quick Start
 
-**Requirements:** Python 3.11+
+**Requirements:** Python 3.10+
 
 ```bash
-# Install in editable mode (includes dev dependencies)
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 
 # List configured robots
