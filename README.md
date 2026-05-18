@@ -4,99 +4,191 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-A production-style Python CLI for orchestrating and monitoring a fleet of robots over SSH.
-
-Designed to reflect the kind of tooling used in robotics infrastructure and SRE environments:
-declarative configuration, health monitoring, structured logging, a cleanly layered
-architecture, and a fully tested mock execution layer.
+A production-style CLI for orchestrating and monitoring a fleet of robots over SSH.
+Built to reflect tooling patterns used in real robotics infrastructure and SRE environments:
+concurrent execution, telemetry simulation, structured reporting, and graceful failure handling.
 
 ---
 
-## Skills Demonstrated
+## What this demonstrates
 
-| Area | Detail |
+| Pattern | Where |
 |---|---|
-| CLI design | `argparse` with subcommands, mutually exclusive flags, clean exit codes |
-| Architecture | Protocol-based executor interface; one-way data flow across four modules |
-| Testing | 22 pytest tests, 100% coverage on core modules, no real SSH or hardware needed |
-| Observability | Structured logging to stderr, configurable verbosity, actionable error messages |
-| CI/CD | GitHub Actions matrix across Python 3.10, 3.11, 3.12; lint + test on every push |
-| Python packaging | `src/` layout, `pyproject.toml`, editable install, entry point script |
+| Concurrent fan-out with `ThreadPoolExecutor` | `executor.py` → `run_fleet_concurrent` |
+| Per-robot failure isolation | futures caught individually; fleet continues on partial failures |
+| Telemetry simulation with seeded RNG | `telemetry.py` → `TelemetrySampler` |
+| Structured JSON reporting | `reporting.py` → `FleetReport` with summary stats |
+| Clean orchestration layer | `orchestrator.py` — thin controller, delegates to domain modules |
+| Protocol-based executor interface | swap `MockSSHExecutor` for Paramiko without touching business logic |
+| `src/` layout with `pyproject.toml` | standard Python packaging |
+| Full pytest coverage | 92 tests across 7 test files |
 
 ---
 
-## Features
+## Architecture
 
-- **Fleet health checks** — ping every robot and report connectivity status at a glance
-- **Remote command execution** — run shell commands across the whole fleet, a single robot,
-  or a tagged group
-- **YAML-driven configuration** — define robots declaratively; no code changes to add or
-  remove nodes
-- **Swappable executor** — `MockSSHExecutor` runs without hardware; replace with a
-  Paramiko-backed implementation by satisfying the same `Executor` protocol
-- **Structured logging** — configurable verbosity with ISO timestamps, written to stderr so
-  stdout stays pipeline-friendly
+```
+src/fleet/
+├── config.py         load_config() → Robot / FleetConfig dataclasses
+├── executor.py       Executor Protocol + MockSSHExecutor + run_fleet_concurrent()
+├── health.py         check_robot_health() / check_fleet_health() — concurrent
+├── telemetry.py      TelemetrySampler — battery, latency, task, health_score
+├── orchestrator.py   deploy() / restart() / fetch_logs() / fleet_status()
+├── reporting.py      FleetReport — structured summaries with stats
+├── cli.py            argparse entry point; dispatches to domain modules
+└── logging_config.py timestamped structured logging to stderr
+
+configs/robots.yaml   8-robot fleet definition
+tests/                92 pytest tests covering all modules
+```
+
+**Data flow (one-way, no cycles):**
+
+```
+config ──► executor ──► health   ┐
+config ──► telemetry             ├──► orchestrator ──► reporting ──► cli
+config ──► executor ──► orchestrator ┘
+```
+
+### Why a separate orchestrator?
+
+In real robotics infrastructure a fleet management service sequences multi-step
+operations: pre-flight check → concurrent deploy → verify → rollback on failure.
+The `orchestrator` layer owns that sequencing and timing context. `executor` and
+`health` stay focused on single-robot mechanics and are independently testable.
+
+### Concurrency model
+
+`run_fleet_concurrent` submits one task per robot to a `ThreadPoolExecutor` (capped
+at 32 workers). Each future is individually guarded: an exception from any robot
+becomes a failed `CommandResult` rather than propagating, so one unreachable robot
+never aborts the rest of the fleet. Results are re-assembled in input order via a
+`future → index` map, so callers can rely on position-based access.
+
+`check_fleet_health` uses the same pattern — concurrent health checks, failures
+captured, results ordered by config.
 
 ---
 
-## Quick Start
-
-**Requirements:** Python 3.10+
+## Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-
-# List configured robots
-fleet list
-
-# Check fleet health
-fleet health
-
-# Run a command on all robots
-fleet run "systemctl status ros2"
-
-# Target by tag or name
-fleet run --tag production "uptime"
-fleet run --robot arm-01 "hostname"
 ```
 
 ---
 
-## Example Output
+## Commands
+
+```bash
+fleetctl list                          # list all configured robots
+fleetctl health                        # connectivity health check across fleet
+fleetctl status                        # live status: health + telemetry per robot
+fleetctl run "uptime"                  # run a command across all robots
+fleetctl deploy 2.2.0                  # deploy a software version to the fleet
+fleetctl restart                       # restart robot-agent service on fleet
+fleetctl logs arm-01                   # fetch logs from a single robot
+fleetctl report                        # full structured fleet health report
+
+# Targeting (run / deploy / restart)
+fleetctl run --robot arm-01 "uptime"
+fleetctl deploy 2.2.0 --tag production
+
+# Output format (most commands)
+fleetctl status --output json
+fleetctl report --output json
+
+# Logging verbosity
+fleetctl --log-level DEBUG health
+```
+
+> `fleet` is also available as an alias for `fleetctl`.
+
+---
+
+## Example workflows
+
+### Fleet status
 
 ```
-$ fleet list
-NAME                 HOST               TYPE         TAGS
---------------------------------------------------------------------
-arm-01               192.168.10.1       arm          production, arm
-arm-02               192.168.10.2       arm          production, arm
-mobile-01            192.168.10.11      mobile       production, mobile
-mobile-02            192.168.10.12      mobile       staging, mobile
-inspection-01        192.168.10.21      inspection   staging, inspection
+$ fleetctl status
 
-$ fleet health
+ROBOT                STATE        BATT   LATENCY TASK       VER      SCORE
+---------------------------------------------------------------------------
+arm-01               ONLINE         87%      14ms patrol     2.2.0    0.87
+arm-02               ONLINE         74%      31ms idle       2.1.1    0.81
+arm-03               DEGRADED       19%     342ms error      2.1.0    0.21
+mobile-01            ONLINE         91%       8ms charging   2.2.0    0.93
+mobile-02            ONLINE         65%      22ms inspection 2.1.1    0.79
+mobile-03            DEGRADED       12%     510ms error      2.1.0    0.18
+inspection-01        ONLINE         88%      11ms patrol     2.2.0    0.90
+inspection-02        ONLINE         77%      19ms idle       2.2.0    0.84
 
-ROBOT                HOST               STATUS       MESSAGE
-------------------------------------------------------------------------
-arm-01               192.168.10.1       HEALTHY      Responded in 0ms
-arm-02               192.168.10.2       HEALTHY      Responded in 0ms
-mobile-01            192.168.10.11      HEALTHY      Responded in 0ms
-mobile-02            192.168.10.12      HEALTHY      Responded in 0ms
-inspection-01        192.168.10.21      HEALTHY      Responded in 0ms
+6 online  2 degraded  0 unreachable  (8 total)
+```
 
-5/5 robots healthy
+### Deploy with partial failure
 
-$ fleet run --tag production "uptime"
-[arm-01] OK
-[arm-02] OK
-[mobile-01] OK
+```
+$ fleetctl deploy 2.2.0 --tag production
+
+Deploying version 2.2.0 to 5 robot(s)...
+
+  [arm-01]        OK   deploy: version extracted successfully on arm-01
+  [arm-02]        OK   deploy: version extracted successfully on arm-02
+  [arm-03]        OK   deploy: version extracted successfully on arm-03
+  [mobile-01]     OK   deploy: version extracted successfully on mobile-01
+  [inspection-02] FAIL deploy: target version incompatible with installed firmware
+
+  Timestamp   : 2026-05-18T10:02:31Z
+  Duration    : 52ms
+  Robots      : 5 total  4 succeeded  1 failed
+  Success rate: 80%
+  Avg latency : 10ms
+  Unhealthy   : inspection-02
+```
+
+### Structured JSON report
+
+```json
+{
+  "timestamp": "2026-05-18T10:02:31Z",
+  "operation": "health",
+  "duration_ms": 12.4,
+  "total_robots": 8,
+  "succeeded": 8,
+  "failed": 0,
+  "avg_latency_ms": 0.1,
+  "unhealthy_robots": [],
+  "success_rate": 1.0,
+  "results": [
+    {
+      "robot": "arm-01",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 0.1,
+      "message": "Responded in 0ms"
+    }
+  ]
+}
+```
+
+### Robot logs
+
+```
+$ fleetctl logs arm-01
+
+May 18 10:00:01 arm-01 robot-agent[1234]: INFO  dispatcher started
+May 18 10:00:02 arm-01 robot-agent[1234]: INFO  connected to base station
+May 18 10:00:15 arm-01 robot-agent[1234]: INFO  task started: patrol
+May 18 10:02:30 arm-01 robot-agent[1234]: WARN  battery below 30%
+May 18 10:05:00 arm-01 robot-agent[1234]: INFO  task complete, docking
 ```
 
 ---
 
-## Robot Configuration
+## Robot configuration
 
 Edit `configs/robots.yaml` to define your fleet:
 
@@ -107,78 +199,81 @@ robots:
     type: arm
     port: 22
     user: ubuntu
-    tags: [production, arm]
+    tags: [production, arm, zone-a]
 ```
 
-| Field  | Required | Default  | Description                         |
-|--------|----------|----------|-------------------------------------|
-| name   | yes      | —        | Unique identifier                   |
-| host   | yes      | —        | IP address or hostname              |
-| type   | yes      | —        | Robot class (arm, mobile, etc.)     |
-| port   | no       | 22       | SSH port                            |
-| user   | no       | robot    | SSH user                            |
-| tags   | no       | []       | Used for group targeting with --tag |
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `name` | yes | — | Unique robot identifier |
+| `host` | yes | — | IP address or hostname |
+| `type` | yes | — | Robot class (`arm`, `mobile`, `inspection`) |
+| `port` | no | 22 | SSH port |
+| `user` | no | `robot` | SSH login user |
+| `tags` | no | `[]` | Group labels used by `--tag` filters |
 
 ---
 
-## Architecture
+## Failure simulation
 
+`MockSSHExecutor` supports per-robot failure modes for realistic scenario testing:
+
+| Mode | Behavior |
+|---|---|
+| `unreachable` | Connection refused immediately |
+| `timeout` | 2-second hang then failure |
+| `degraded` | Slow (300ms+) with stderr warnings |
+| `deploy_failure` | Non-zero exit on deploy commands |
+
+```python
+executor = MockSSHExecutor(
+    failure_modes={
+        "arm-03":        "degraded",
+        "inspection-01": "timeout",
+    }
+)
 ```
-src/fleet/
-├── config.py         # YAML loading → Robot / FleetConfig dataclasses
-├── executor.py       # Executor protocol + MockSSHExecutor
-├── health.py         # Health check logic on top of Executor
-├── cli.py            # argparse entry point; dispatches to above modules
-└── logging_config.py
+
+`TelemetrySampler` supports the same modes for telemetry state:
+
+```python
+sampler = TelemetrySampler(
+    failure_modes={
+        "arm-03":    "degraded",     # low battery, high latency, degraded state
+        "mobile-03": "unreachable",  # last_seen stale, health_score 0.0
+    }
+)
 ```
-
-The `Executor` [Protocol](src/fleet/executor.py) is the key seam in the design. `health.py`
-and `cli.py` call `executor.run(robot, command)` and know nothing about how that's
-implemented — making it straightforward to swap in a Paramiko SSH executor, a dry-run
-logger, or a parallel executor without touching any business logic.
-
-Data flows one way: `config` has no knowledge of `executor` or `health`; `executor` knows
-only `Robot`; `health` composes `config` + `executor`; `cli` wires everything together.
 
 ---
 
 ## Testing
 
 ```bash
-# Run all tests
-pytest
-
-# With coverage
-pytest --cov=fleet --cov-report=term-missing
-
-# Run a single test file
-pytest tests/test_health.py
-
-# Run a single test
-pytest tests/test_health.py::test_executor_exception_yields_unknown
+pytest                                           # 92 tests
+pytest tests/test_orchestrator.py               # orchestration layer
+pytest tests/test_telemetry.py                  # telemetry simulation
+pytest tests/test_reporting.py                  # fleet reports
+pytest --cov=fleet --cov-report=term-missing    # with coverage
+ruff check src/ tests/                          # lint
 ```
 
-Tests use `MockSSHExecutor` throughout — no real SSH connections, no hardware required.
-The `BrokenExecutor` fixture in `test_health.py` verifies that executor-level exceptions
-are caught and reported as `UNKNOWN` status rather than propagated.
+All tests use `MockSSHExecutor` — no real SSH connections or hardware required.
 
 ---
 
-## CI
+## Extending to real hardware
 
-GitHub Actions runs lint (`ruff`) and the full test suite on Python 3.10, 3.11, and 3.12
-on every push and pull request. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+The `Executor` Protocol is the only seam you need to replace:
 
----
+```python
+import paramiko
+from fleet.executor import CommandResult
+from fleet.config import Robot
 
-## Extending
+class ParamikoExecutor:
+    def run(self, robot: Robot, command: str) -> CommandResult:
+        # connect via paramiko, run command, return CommandResult
+        ...
+```
 
-**Add real SSH execution:** implement a class with
-`def run(self, robot: Robot, command: str) -> CommandResult` using Paramiko, then pass it
-anywhere a `MockSSHExecutor` is used today.
-
-**Add parallel execution:** wrap `check_fleet_health` or `cmd_run` with
-`concurrent.futures.ThreadPoolExecutor` — the per-robot functions are already independent.
-
-**Add new CLI commands:** add a `sub.add_parser(...)` block in `build_parser()` and a
-matching `cmd_*` function, then register it in the `dispatch` dict in `main()`.
+Pass it anywhere `MockSSHExecutor` is used today — no other changes required.

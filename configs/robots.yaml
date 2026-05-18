@@ -4,32 +4,53 @@ robots:
     type: arm
     port: 22
     user: ubuntu
-    tags: [production, arm]
+    tags: [production, arm, zone-a]
 
   - name: arm-02
     host: 192.168.10.2
     type: arm
     port: 22
     user: ubuntu
-    tags: [production, arm]
+    tags: [production, arm, zone-a]
+
+  - name: arm-03
+    host: 192.168.10.3
+    type: arm
+    port: 22
+    user: ubuntu
+    tags: [production, arm, zone-b]
 
   - name: mobile-01
     host: 192.168.10.11
     type: mobile
     port: 22
     user: ubuntu
-    tags: [production, mobile]
+    tags: [production, mobile, zone-a]
 
   - name: mobile-02
     host: 192.168.10.12
     type: mobile
     port: 22
     user: ubuntu
-    tags: [staging, mobile]
+    tags: [production, mobile, zone-b]
+
+  - name: mobile-03
+    host: 192.168.10.13
+    type: mobile
+    port: 22
+    user: ubuntu
+    tags: [staging, mobile, zone-b]
 
   - name: inspection-01
     host: 192.168.10.21
     type: inspection
     port: 22
     user: ubuntu
-    tags: [staging, inspection]
+    tags: [staging, inspection, zone-c]
+
+  - name: inspection-02
+    host: 192.168.10.22
+    type: inspection
+    port: 22
+    user: ubuntu
+    tags: [production, inspection, zone-c]

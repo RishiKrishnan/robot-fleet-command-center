@@ -5,38 +5,48 @@ repository.
 
 ## Project
 
-Robot Fleet Command Center — a Python CLI tool for orchestrating and health-checking a fleet
-of robots over SSH. Stack: Python 3.10+, PyYAML, pytest, ruff, GitHub Actions CI.
+Robot Fleet Command Center — a Python CLI for orchestrating and monitoring a fleet of robots.
+Stack: Python 3.10+, PyYAML, pytest, ruff, GitHub Actions CI. Entry points: `fleetctl` / `fleet`.
 
 ## Commands
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"          # install with dev deps (pytest, ruff)
-fleet list                        # list configured robots
-fleet health                      # check fleet health
-fleet run "uptime"                # run command on all robots
-fleet run --tag production "uptime"
-fleet run --robot arm-01 "uptime"
+pip install -e ".[dev]"              # install with dev deps (pytest, ruff)
+fleetctl list                         # list configured robots
+fleetctl health                       # connectivity health checks
+fleetctl status                       # health + telemetry per robot
+fleetctl run "uptime"                 # run command on all robots
+fleetctl run --tag production "uptime"
+fleetctl run --robot arm-01 "uptime"
+fleetctl deploy 2.2.0                 # deploy software version to fleet
+fleetctl restart                      # restart robot-agent service
+fleetctl logs arm-01                  # fetch logs from a robot
+fleetctl report                       # full structured health report
+fleetctl report --output json         # machine-readable JSON
 
-pytest                            # run all tests
-pytest tests/test_health.py       # single file
-pytest tests/test_health.py::test_healthy_robot  # single test
+pytest                                # run all 92 tests
+pytest tests/test_orchestrator.py     # orchestration layer
+pytest tests/test_telemetry.py        # telemetry simulation
+pytest tests/test_reporting.py        # fleet reports
 pytest --cov=fleet --cov-report=term-missing
-ruff check src/ tests/            # lint
+ruff check src/ tests/                # lint
 ```
 
 ## Architecture
 
 ```
 src/fleet/
-├── config.py        # load_config() → Robot / FleetConfig dataclasses
-├── executor.py      # Executor protocol + MockSSHExecutor
-├── health.py        # check_robot_health / check_fleet_health
-├── cli.py           # argparse entry point; dispatches to above modules
+├── config.py         load_config() → Robot / FleetConfig dataclasses
+├── executor.py       Executor Protocol + MockSSHExecutor + run_fleet_concurrent()
+├── health.py         check_robot_health() / check_fleet_health() — concurrent
+├── telemetry.py      TelemetrySampler — battery, latency, task, health_score
+├── orchestrator.py   deploy() / restart() / fetch_logs() / fleet_status()
+├── reporting.py      FleetReport — structured summaries with stats
+├── cli.py            argparse entry point; dispatches to domain modules
 └── logging_config.py
-configs/robots.yaml  # declarative fleet definition
-tests/               # pytest; conftest.py defines shared Robot/FleetConfig fixtures
+configs/robots.yaml   8-robot fleet definition (arm, mobile, inspection types)
+tests/                92 pytest tests across 7 test files
 ```
 
 The `Executor` Protocol in `executor.py` is the main extension point — `health.py` and
