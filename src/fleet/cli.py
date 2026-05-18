@@ -7,7 +7,7 @@ import logging
 import sys
 
 from fleet.config import FleetConfig, load_config
-from fleet.executor import MockSSHExecutor
+from fleet.executor import MockSSHExecutor, run_fleet_concurrent
 from fleet.health import HealthStatus, check_fleet_health
 from fleet.logging_config import setup_logging
 
@@ -76,7 +76,7 @@ def cmd_run(args: argparse.Namespace, config: FleetConfig) -> int:
         robots = config.robots
 
     executor = MockSSHExecutor()
-    results = [executor.run(robot, command) for robot in robots]
+    results = run_fleet_concurrent(robots, command, executor)
 
     if args.output == "json":
         print(_to_json(results))
