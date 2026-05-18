@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -72,3 +73,57 @@ class MockSSHExecutor:
             stderr="",
             duration_ms=elapsed_ms,
         )
+
+
+def run_fleet_concurrent(
+    robots: list[Robot],
+    command: str,
+    executor: Executor,
+    *,
+    max_workers: int | None = None,
+) -> list[CommandResult]:
+    """Fan out a command to all robots concurrently.
+
+    Results are returned in the same order as `robots`. A per-robot executor
+    exception is captured as a failed CommandResult rather than propagated, so
+    one unresponsive robot never aborts the rest of the fleet.
+    """
+    if not robots:
+        return []
+
+    workers = max_workers or min(len(robots), 32)
+    logger.info(
+        "Dispatching %r to %d robot(s) with %d worker(s)",
+        command, len(robots), workers,
+    )
+
+    ordered: dict[int, CommandResult] = {}
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_to_idx = {
+            pool.submit(executor.run, robot, command): i
+            for i, robot in enumerate(robots)
+        }
+        for future in as_completed(future_to_idx):
+            idx = future_to_idx[future]
+            robot = robots[idx]
+            try:
+                result = future.result()
+            except Exception as exc:
+                logger.error("[%s] executor raised unexpectedly: %s", robot.name, exc)
+                result = CommandResult(
+                    robot=robot.name,
+                    command=command,
+                    exit_code=1,
+                    stdout="",
+                    stderr=str(exc),
+                    duration_ms=0.0,
+                )
+            level = logging.DEBUG if result.success else logging.WARNING
+            logger.log(
+                level, "[%s] exit=%d in %.0fms",
+                robot.name, result.exit_code, result.duration_ms,
+            )
+            ordered[idx] = result
+
+    return [ordered[i] for i in range(len(robots))]
