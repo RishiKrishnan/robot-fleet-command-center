@@ -80,7 +80,8 @@ def check_fleet_health(
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_idx = {
-            pool.submit(check_robot_health, robot, executor): i for i, robot in enumerate(robots)
+            pool.submit(check_robot_health, robot, executor): i
+            for i, robot in enumerate(robots)
         }
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
