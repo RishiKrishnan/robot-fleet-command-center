@@ -8,7 +8,9 @@ dist/
 build/
 .venv/
 venv/
+test_venv1/
 .coverage
 htmlcov/
 .pytest_cache/
 *.log
+walkthrough.txt
