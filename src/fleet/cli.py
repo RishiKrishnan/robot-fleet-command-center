@@ -97,7 +97,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Robot Fleet Command Center — orchestrate and monitor your robot fleet.",
     )
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         default=DEFAULT_CONFIG,
         metavar="PATH",
         help=f"Path to robot config YAML (default: {DEFAULT_CONFIG})",
@@ -115,7 +116,8 @@ def build_parser() -> argparse.ArgumentParser:
     # (e.g. `fleet list --output json`) rather than before it.
     output_parent = argparse.ArgumentParser(add_help=False)
     output_parent.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         choices=["human", "json"],
         default="human",
         help="Output format (default: human)",

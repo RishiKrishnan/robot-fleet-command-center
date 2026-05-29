@@ -94,15 +94,16 @@ def run_fleet_concurrent(
     workers = max_workers or min(len(robots), 32)
     logger.info(
         "Dispatching %r to %d robot(s) with %d worker(s)",
-        command, len(robots), workers,
+        command,
+        len(robots),
+        workers,
     )
 
     ordered: dict[int, CommandResult] = {}
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_idx = {
-            pool.submit(executor.run, robot, command): i
-            for i, robot in enumerate(robots)
+            pool.submit(executor.run, robot, command): i for i, robot in enumerate(robots)
         }
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
@@ -121,8 +122,11 @@ def run_fleet_concurrent(
                 )
             level = logging.DEBUG if result.success else logging.WARNING
             logger.log(
-                level, "[%s] exit=%d in %.0fms",
-                robot.name, result.exit_code, result.duration_ms,
+                level,
+                "[%s] exit=%d in %.0fms",
+                robot.name,
+                result.exit_code,
+                result.duration_ms,
             )
             ordered[idx] = result
 

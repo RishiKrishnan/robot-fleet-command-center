@@ -50,6 +50,7 @@ def test_fleet_health_covers_all_robots(two_robots):
 
 def test_executor_exception_yields_unknown():
     """An executor that raises should return UNKNOWN, not propagate."""
+
     class BrokenExecutor:
         def run(self, robot, command):
             raise RuntimeError("connection timeout")

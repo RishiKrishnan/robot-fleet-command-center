@@ -1,4 +1,5 @@
 """Tests for CLI JSON output and backward-compatible human output."""
+
 import argparse
 import json
 
@@ -26,6 +27,7 @@ def _args(**kwargs) -> argparse.Namespace:
 
 # --- list ---
 
+
 def test_list_json_valid(fleet, capsys):
     rc = cmd_list(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -50,6 +52,7 @@ def test_list_human_unchanged(fleet, capsys):
 
 # --- health ---
 
+
 def test_health_json_valid(fleet, capsys):
     rc = cmd_health(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -67,9 +70,7 @@ def test_health_json_unhealthy_exit_code(capsys):
 
     from fleet.executor import MockSSHExecutor
 
-    broken_fleet = FleetConfig(
-        robots=[Robot(name="broken", host="10.0.0.99", type="arm")]
-    )
+    broken_fleet = FleetConfig(robots=[Robot(name="broken", host="10.0.0.99", type="arm")])
     with patch("fleet.cli.MockSSHExecutor") as MockExec:
         MockExec.return_value = MockSSHExecutor(fail_hosts={"broken"}, latency_ms=0)
         rc = cmd_health(_args(output="json"), broken_fleet)
@@ -89,6 +90,7 @@ def test_health_human_unchanged(fleet, capsys):
 
 
 # --- run ---
+
 
 def test_run_json_valid(fleet, capsys):
     rc = cmd_run(_args(output="json", shell_command=["uptime"]), fleet)
