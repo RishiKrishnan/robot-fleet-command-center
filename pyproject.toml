@@ -35,6 +35,9 @@ addopts = "--tb=short"
 [tool.coverage.run]
 source = ["src"]
 
+[tool.coverage.report]
+fail_under = 85
+
 [tool.ruff]
 line-length = 100
 
