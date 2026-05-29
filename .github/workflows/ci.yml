@@ -31,8 +31,8 @@ jobs:
       - name: Lint
         run: ruff check src/ tests/
 
+      - name: Format check
+        run: ruff format --check src/ tests/
+
       - name: Test
         run: pytest --cov=fleet --cov-report=term-missing
-      
-      - name: Format
-        run: ruff format --check src/ tests/
