@@ -7,6 +7,7 @@ would consume from a fleet management API.
 This module is a pure transformation layer: data in, structured report out.
 No I/O, no side effects.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -21,6 +22,7 @@ def _iso_now() -> str:
 @dataclass
 class OperationResult:
     """Per-robot result within a FleetReport."""
+
     robot: str
     success: bool
     exit_code: int
@@ -35,6 +37,7 @@ class FleetReport:
     Designed to be serialized directly to JSON for dashboards, alerting
     pipelines, or post-operation audits.
     """
+
     timestamp: str
     operation: str
     duration_ms: float
@@ -59,7 +62,7 @@ class FleetReport:
 
 def build_command_report(
     operation: str,
-    results: list,     # list[CommandResult]
+    results: list,  # list[CommandResult]
     duration_ms: float,
 ) -> FleetReport:
     """Build a FleetReport from a list of CommandResults (run / deploy / restart)."""
@@ -97,8 +100,7 @@ def build_health_report(
 
     succeeded = sum(1 for h in health_results if h.status == HealthStatus.HEALTHY)
     avg_latency = (
-        sum(h.duration_ms for h in health_results) / len(health_results)
-        if health_results else 0.0
+        sum(h.duration_ms for h in health_results) / len(health_results) if health_results else 0.0
     )
 
     return FleetReport(

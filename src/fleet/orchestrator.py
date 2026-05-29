@@ -9,6 +9,7 @@ In a production system this would be a long-running service. Here it is a
 collection of functions called directly by the CLI — simple, testable, and
 easy to reason about in an interview setting.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,10 @@ def deploy(
     failed = sum(1 for r in results if not r.success)
     logger.info(
         "Deploy %s complete: %d/%d succeeded in %.0fms",
-        version, len(results) - failed, len(robots), duration_ms,
+        version,
+        len(results) - failed,
+        len(robots),
+        duration_ms,
     )
     return results, duration_ms
 
@@ -57,7 +61,9 @@ def restart(
     failed = sum(1 for r in results if not r.success)
     logger.info(
         "Restart complete: %d/%d succeeded in %.0fms",
-        len(results) - failed, len(robots), duration_ms,
+        len(results) - failed,
+        len(robots),
+        duration_ms,
     )
     return results, duration_ms
 

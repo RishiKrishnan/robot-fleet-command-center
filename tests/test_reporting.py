@@ -1,4 +1,5 @@
 """Tests for FleetReport and report builder functions."""
+
 import json
 
 from fleet.executor import CommandResult
@@ -7,23 +8,40 @@ from fleet.reporting import build_command_report, build_health_report
 
 
 def _ok(robot: str, duration_ms: float = 10.0) -> CommandResult:
-    return CommandResult(robot=robot, command="uptime", exit_code=0,
-                         stdout="ok", stderr="", duration_ms=duration_ms)
+    return CommandResult(
+        robot=robot, command="uptime", exit_code=0, stdout="ok", stderr="", duration_ms=duration_ms
+    )
 
 
 def _fail(robot: str, duration_ms: float = 10.0) -> CommandResult:
-    return CommandResult(robot=robot, command="uptime", exit_code=1,
-                         stdout="", stderr="connection refused", duration_ms=duration_ms)
+    return CommandResult(
+        robot=robot,
+        command="uptime",
+        exit_code=1,
+        stdout="",
+        stderr="connection refused",
+        duration_ms=duration_ms,
+    )
 
 
 def _healthy(robot: str, host: str = "10.0.0.1") -> RobotHealth:
-    return RobotHealth(robot=robot, host=host, status=HealthStatus.HEALTHY,
-                       message="Responded in 5ms", duration_ms=5.0)
+    return RobotHealth(
+        robot=robot,
+        host=host,
+        status=HealthStatus.HEALTHY,
+        message="Responded in 5ms",
+        duration_ms=5.0,
+    )
 
 
 def _unhealthy(robot: str, host: str = "10.0.0.2") -> RobotHealth:
-    return RobotHealth(robot=robot, host=host, status=HealthStatus.UNHEALTHY,
-                       message="Connection refused", duration_ms=0.0)
+    return RobotHealth(
+        robot=robot,
+        host=host,
+        status=HealthStatus.UNHEALTHY,
+        message="Connection refused",
+        duration_ms=0.0,
+    )
 
 
 class TestBuildCommandReport:

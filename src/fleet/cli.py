@@ -4,6 +4,7 @@ Entry point for all fleet operations. Each subcommand delegates to the
 appropriate domain module (orchestrator, health, reporting) and handles
 only I/O: argument parsing, output formatting, and exit codes.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +30,7 @@ DEFAULT_CONFIG = "configs/robots.yaml"
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _to_json(data: list) -> str:
     """Serialize a list of dataclasses (or dicts) to indented JSON."""
@@ -89,6 +91,7 @@ def _print_report_summary(report: FleetReport) -> None:
 # ---------------------------------------------------------------------------
 # Subcommands
 # ---------------------------------------------------------------------------
+
 
 def cmd_list(args: argparse.Namespace, config: FleetConfig) -> int:
     if args.output == "json":
@@ -277,13 +280,15 @@ def cmd_report(args: argparse.Namespace, config: FleetConfig) -> int:
 # Parser
 # ---------------------------------------------------------------------------
 
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="fleetctl",
         description="Robot Fleet Command Center — orchestrate and monitor your robot fleet.",
     )
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         default=DEFAULT_CONFIG,
         metavar="PATH",
         help=f"Path to robot config YAML (default: {DEFAULT_CONFIG})",
@@ -301,7 +306,8 @@ def build_parser() -> argparse.ArgumentParser:
     # Shared parent: --output flag
     output_p = argparse.ArgumentParser(add_help=False)
     output_p.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         choices=["human", "json"],
         default="human",
         help="Output format (default: human)",
@@ -315,39 +321,45 @@ def build_parser() -> argparse.ArgumentParser:
 
     # --- list ---
     sub.add_parser(
-        "list", parents=[output_p],
+        "list",
+        parents=[output_p],
         help="List all configured robots",
     )
 
     # --- health ---
     sub.add_parser(
-        "health", parents=[output_p],
+        "health",
+        parents=[output_p],
         help="Run connectivity health checks on the fleet",
     )
 
     # --- status ---
     sub.add_parser(
-        "status", parents=[output_p],
+        "status",
+        parents=[output_p],
         help="Show live fleet status: health + telemetry",
     )
 
     # --- run ---
     run_p = sub.add_parser(
-        "run", parents=[output_p, target_p],
+        "run",
+        parents=[output_p, target_p],
         help="Execute an arbitrary shell command across the fleet",
     )
     run_p.add_argument("shell_command", nargs="+", help="Shell command to execute")
 
     # --- deploy ---
     deploy_p = sub.add_parser(
-        "deploy", parents=[output_p, target_p],
+        "deploy",
+        parents=[output_p, target_p],
         help="Deploy a software version to the fleet",
     )
     deploy_p.add_argument("version", help="Version string to deploy (e.g. 2.2.0)")
 
     # --- restart ---
     sub.add_parser(
-        "restart", parents=[output_p, target_p],
+        "restart",
+        parents=[output_p, target_p],
         help="Restart the robot-agent service on the fleet",
     )
 
@@ -358,14 +370,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     logs_p.add_argument("robot_name", metavar="ROBOT", help="Robot name")
     logs_p.add_argument(
-        "--lines", "-n",
-        type=int, default=50,
+        "--lines",
+        "-n",
+        type=int,
+        default=50,
         help="Number of log lines to fetch (default: 50)",
     )
 
     # --- report ---
     sub.add_parser(
-        "report", parents=[output_p],
+        "report",
+        parents=[output_p],
         help="Generate a full structured fleet health report",
     )
 
@@ -375,6 +390,7 @@ def build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = build_parser()
@@ -392,14 +408,14 @@ def main() -> None:
         sys.exit(1)
 
     dispatch = {
-        "list":    cmd_list,
-        "health":  cmd_health,
-        "run":     cmd_run,
-        "status":  cmd_status,
-        "deploy":  cmd_deploy,
+        "list": cmd_list,
+        "health": cmd_health,
+        "run": cmd_run,
+        "status": cmd_status,
+        "deploy": cmd_deploy,
         "restart": cmd_restart,
-        "logs":    cmd_logs,
-        "report":  cmd_report,
+        "logs": cmd_logs,
+        "report": cmd_report,
     }
     sys.exit(dispatch[args.subcommand](args, config))
 

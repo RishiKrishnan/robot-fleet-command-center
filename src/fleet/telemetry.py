@@ -9,6 +9,7 @@ bucket, giving realistic-looking variance across the fleet.
 Inject failure_modes per robot name to force specific failure scenarios in
 development, demos, or integration tests.
 """
+
 from __future__ import annotations
 
 import random
@@ -33,9 +34,9 @@ class RobotTelemetry:
     battery_pct: float
     latency_ms: float
     software_version: str
-    last_seen: str          # ISO 8601 UTC
+    last_seen: str  # ISO 8601 UTC
     current_task: str
-    health_score: float     # 0.0–1.0 composite
+    health_score: float  # 0.0–1.0 composite
     operational_state: str  # online | degraded | unreachable
 
     @property

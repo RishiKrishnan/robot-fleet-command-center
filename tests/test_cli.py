@@ -1,4 +1,5 @@
 """Tests for CLI command handlers: JSON output, human output, exit codes."""
+
 import argparse
 import json
 from unittest.mock import patch
@@ -39,6 +40,7 @@ def _args(**kwargs) -> argparse.Namespace:
 # list
 # ---------------------------------------------------------------------------
 
+
 def test_list_json_valid(fleet, capsys):
     rc = cmd_list(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -65,6 +67,7 @@ def test_list_human_unchanged(fleet, capsys):
 # health
 # ---------------------------------------------------------------------------
 
+
 def test_health_json_valid(fleet, capsys):
     rc = cmd_health(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -78,9 +81,7 @@ def test_health_json_valid(fleet, capsys):
 
 
 def test_health_json_unhealthy_exit_code(capsys):
-    broken_fleet = FleetConfig(
-        robots=[Robot(name="broken", host="10.0.0.99", type="arm")]
-    )
+    broken_fleet = FleetConfig(robots=[Robot(name="broken", host="10.0.0.99", type="arm")])
     with patch("fleet.cli.MockSSHExecutor") as MockExec:
         MockExec.return_value = MockSSHExecutor(fail_hosts={"broken"}, latency_ms=0)
         rc = cmd_health(_args(output="json"), broken_fleet)
@@ -102,6 +103,7 @@ def test_health_human_unchanged(fleet, capsys):
 # ---------------------------------------------------------------------------
 # run
 # ---------------------------------------------------------------------------
+
 
 def test_run_json_valid(fleet, capsys):
     rc = cmd_run(_args(output="json", shell_command=["uptime"]), fleet)
@@ -163,6 +165,7 @@ def test_run_unknown_robot_returns_error(fleet, capsys):
 # status
 # ---------------------------------------------------------------------------
 
+
 def test_status_json_valid(fleet, capsys):
     rc = cmd_status(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -186,6 +189,7 @@ def test_status_human_contains_headers(fleet, capsys):
 # ---------------------------------------------------------------------------
 # deploy
 # ---------------------------------------------------------------------------
+
 
 def test_deploy_json_valid(fleet, capsys):
     rc = cmd_deploy(_args(output="json", version="2.2.0"), fleet)
@@ -224,6 +228,7 @@ def test_deploy_human_output(fleet, capsys):
 # restart
 # ---------------------------------------------------------------------------
 
+
 def test_restart_json_valid(fleet, capsys):
     rc = cmd_restart(_args(output="json"), fleet)
     out = capsys.readouterr().out
@@ -245,6 +250,7 @@ def test_restart_human_output(fleet, capsys):
 # logs
 # ---------------------------------------------------------------------------
 
+
 def test_logs_success(fleet, capsys):
     rc = cmd_logs(_args(robot_name="arm-01", lines=50), fleet)
     out = capsys.readouterr().out
@@ -260,6 +266,7 @@ def test_logs_unknown_robot(fleet, capsys):
 # ---------------------------------------------------------------------------
 # report
 # ---------------------------------------------------------------------------
+
 
 def test_report_json_valid(fleet, capsys):
     rc = cmd_report(_args(output="json"), fleet)
@@ -284,9 +291,7 @@ def test_report_human_output(fleet, capsys):
 
 
 def test_report_unhealthy_exit_code(capsys):
-    broken_fleet = FleetConfig(
-        robots=[Robot(name="broken", host="10.0.0.99", type="arm")]
-    )
+    broken_fleet = FleetConfig(robots=[Robot(name="broken", host="10.0.0.99", type="arm")])
     with patch("fleet.cli.MockSSHExecutor") as MockExec:
         MockExec.return_value = MockSSHExecutor(fail_hosts={"broken"}, latency_ms=0)
         rc = cmd_report(_args(output="json"), broken_fleet)

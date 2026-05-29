@@ -1,4 +1,5 @@
 """Tests for the orchestrator layer."""
+
 from fleet.config import FleetConfig, Robot
 from fleet.executor import MockSSHExecutor
 from fleet.orchestrator import deploy, fetch_logs, fleet_status, restart

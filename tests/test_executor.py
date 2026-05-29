@@ -56,6 +56,7 @@ def test_no_fail_hosts_by_default(arm_robot):
 
 # --- failure_modes ---
 
+
 def test_failure_mode_unreachable(arm_robot):
     executor = MockSSHExecutor(failure_modes={"arm-01": "unreachable"}, latency_ms=0)
     result = executor.run(arm_robot, "uptime")
@@ -99,6 +100,7 @@ def test_ok_response_deploy(arm_robot):
 
 # --- run_fleet_concurrent ---
 
+
 def _make_fleet(n: int) -> list[Robot]:
     return [Robot(name=f"r-{i:02d}", host=f"10.0.0.{i}", type="arm") for i in range(n)]
 
@@ -136,6 +138,7 @@ def test_concurrent_empty_robots():
 
 def test_concurrent_executor_raises_captured():
     """An executor that raises must produce a failed result, not propagate."""
+
     class BoomExecutor:
         def run(self, robot, command):
             raise ConnectionError("timeout")

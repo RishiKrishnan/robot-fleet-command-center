@@ -1,4 +1,5 @@
 """Tests for TelemetrySampler and RobotTelemetry."""
+
 from fleet.config import Robot
 from fleet.telemetry import RobotTelemetry, TelemetrySampler
 
