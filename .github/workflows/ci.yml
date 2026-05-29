@@ -33,3 +33,6 @@ jobs:
 
       - name: Test
         run: pytest --cov=fleet --cov-report=term-missing
+      
+      - name: Format
+        run: ruff format --check src/ tests/
