@@ -25,12 +25,13 @@ fleetctl logs arm-01                  # fetch logs from a robot
 fleetctl report                       # full structured health report
 fleetctl report --output json         # machine-readable JSON
 
-pytest                                # run all 92 tests
+pytest                                # run all 98 tests
 pytest tests/test_orchestrator.py     # orchestration layer
 pytest tests/test_telemetry.py        # telemetry simulation
 pytest tests/test_reporting.py        # fleet reports
-pytest --cov=fleet --cov-report=term-missing
+pytest --cov=fleet --cov-report=term-missing  # coverage; CI gates at 85%
 ruff check src/ tests/                # lint
+ruff format --check src/ tests/       # formatting (CI-gated)
 ```
 
 ## Architecture
@@ -46,7 +47,7 @@ src/fleet/
 ├── cli.py            argparse entry point; dispatches to domain modules
 └── logging_config.py
 configs/robots.yaml   8-robot fleet definition (arm, mobile, inspection types)
-tests/                92 pytest tests across 7 test files
+tests/                98 pytest tests across 7 test files
 ```
 
 The `Executor` Protocol in `executor.py` is the main extension point — `health.py` and

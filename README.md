@@ -21,7 +21,7 @@ concurrent execution, telemetry simulation, structured reporting, and graceful f
 | Clean orchestration layer | `orchestrator.py` — thin controller, delegates to domain modules |
 | Protocol-based executor interface | swap `MockSSHExecutor` for Paramiko without touching business logic |
 | `src/` layout with `pyproject.toml` | standard Python packaging |
-| Full pytest coverage | 92 tests across 7 test files |
+| Full pytest coverage | 98 tests across 7 test files, 88% line coverage |
 
 ---
 
@@ -39,7 +39,7 @@ src/fleet/
 └── logging_config.py timestamped structured logging to stderr
 
 configs/robots.yaml   8-robot fleet definition
-tests/                92 pytest tests covering all modules
+tests/                98 pytest tests covering all modules
 ```
 
 **Data flow (one-way, no cycles):**
@@ -249,15 +249,31 @@ sampler = TelemetrySampler(
 ## Testing
 
 ```bash
-pytest                                           # 92 tests
+pytest                                           # 98 tests
 pytest tests/test_orchestrator.py               # orchestration layer
 pytest tests/test_telemetry.py                  # telemetry simulation
 pytest tests/test_reporting.py                  # fleet reports
 pytest --cov=fleet --cov-report=term-missing    # with coverage
 ruff check src/ tests/                          # lint
+ruff format --check src/ tests/                 # formatting
 ```
 
 All tests use `MockSSHExecutor` — no real SSH connections or hardware required.
+
+---
+
+## Quality gates
+
+Every PR is gated by GitHub Actions (`.github/workflows/ci.yml`) on the following:
+
+| Check | Tool | Failure condition |
+|---|---|---|
+| Lint | `ruff check` | Any lint rule violation in `src/` or `tests/` |
+| Formatting | `ruff format --check` | Any file not matching the formatter's canonical output |
+| Tests | `pytest --cov=fleet` | Any test failure, **or** total coverage below 85% (`fail_under` in `pyproject.toml`) |
+| Compatibility | matrix | Any of the above failing on Python 3.10, 3.11, or 3.12 |
+
+Coverage threshold is set just below current (88%) so trivial refactors don't break the build but meaningful regressions do. Raise it as coverage improves; never silently lower it.
 
 ---
 
